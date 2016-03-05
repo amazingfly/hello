@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+var zed = 0 //for iterative funcion, so numbers 			//do not repeat
+
+//takes in the original number and the factor to //be used
+func Factor(originalNum int, factor int) (){
+
+	tempNum := 0
+	tempArray := make([]int, 0)
+	tempNum = originalNum / factor
+	
+	//finds the factors of the passed in number
+	for i := 0; i <= tempNum; i++ {
+	    
+		if math.Remainder(float64(tempNum), 			float64(i)) == 0{
+			tempArray = append (tempArray, i)
+		}
+	}
+	//iterates over the array finding the correct	 //multiples of the original number
+	// i = zed so numbers dont repeat
+	//i < lenght of tempArray/2 to split the 		//array and stop repeats
+	for i := zed; i < len(tempArray)/2; i++ {
+		//j = half of tempArray length, so it 			//starts where i leaves off
+		for j := len(tempArray)-1; j > 					len(tempArray)/2; j-- {
+			if factor*tempArray[i]*tempArray[j] 			== originalNum {
+				
+				fmt.Println(factor, " x ", 						tempArray[i], " x ", 							tempArray[j], " = ", originalNum)
+			}
+		}
+	}
+	//increments zed to stop repeats
+	zed++
+	return
+}
+
+func StartFactor(originalNum int) () {
+    factors := make([]int, 0)
+	
+	for i := 0; i <= originalNum; i++ {
+	    if math.Remainder(float64(originalNum), 		float64(i)) == 0 {
+		    factors = append(factors, i)
+			
+		}
+	}
+	for i := 0; i < len(factors); i++{
+		Factor(originalNum, factors[i])
+	}
+	return 
+}
+
+
+func main() {
+	StartFactor(1600)
+}
