@@ -4,8 +4,10 @@ import (
 	"errors"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
+	"time"
 )
 
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
@@ -86,8 +88,34 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 }
 
 func main() {
+	s := &http.Server{
+		Addr:           ":8181",
+		Handler:        nil,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	log.Fatal(s.ListenAndServeTLS("cert.pem", "key.pem"))
+
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
-	http.ListenAndServe(":8181", nil)
+
+	/*
+		rpURL, err := url.Parse(backendServer.URL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		frontendProxy := httptest.NewServer(httputil.NewSingleHostReverseProxy(rpURL))
+		defer frontendProxy.Close()
+
+		resp, err := http.Get(frontendProxy.URL)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}*/
 }
