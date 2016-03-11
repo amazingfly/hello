@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+    var recordArr = [];
+    search();
+    //search searches and displays records
+    function search (){
+        //resets the list and array of records when each new search is started
+        $("#list").empty();
+        recordArr = [];
+        $.get( "/searchFor", { searchKey: $("#key").val() } )
+          .done(function( data ) {
+            //parse data into json object
+            //double parse,look at how JSON is built in the worker
+            var jsonmsg = $.parseJSON($.parseJSON(data));
+
+//finds name and ID of a record and adds it to the listbox id= list
+var i = 0
+
+recursiveGetProp(jsonmsg, 'Name', function(obj) {
+    recordArr.push(new record(i, jsonmsg[`item`+i].ID, obj, jsonmsg[`item`+i].qty, jsonmsg[`item`+i].price ));
+    addOption(recordArr[i].name +" #"+recordArr[i].id , i);
+    console.log(recordArr[i].name + " : gets passed into addOption")
+    i++;
+});
+          });
+        }
+
+    //prototype for record objects
+    function record(index, id, name, qty, price) {
+      this.index = index;
+      this.id = id;
+      this.name = name;
+      this.qty = qty;
+      this.price = price;
+}
+    //formats the record objects data to be displayed, used in fillFunction
+    function formatRecordText (index){
+      var s = "";
+      s += "ID#:   " + recordArr[index].id + '\n';
+      s += "Name:  " + recordArr[index].name + '\n';
+      s += "Price: " + recordArr[index].price.toFixed(2) + '\n';
+      s += "qty:   " + recordArr[index].qty + '\n';
+      return s;
+    }
+    //calls filltext and sends it formateRecordText to fill the record display text area
+    function fillFunction(){
+      var list = document.getElementById("list");
+      fillText("display", formatRecordText(list.options[list.selectedIndex].value));
+    }
+    //fills text area using id
+    function fillText(elId,text) {
+        document.getElementById(elId).value = text;
+    }
+    //adds items to list box id = list
+    function addOption(txt, val) {
+      var s = document.getElementById('list');
+      var o = new Option(txt,val);
+      s.options[s.options.length]=o;
+      return true;
+    }
+    //gets a property of the JSON records returned from the search
+    function recursiveGetProp(obj, lookup, callback) {
+
+        for (property in obj) {
+            if (property == lookup) {
+                callback(obj[property]);
+            } else if (obj[property] instanceof Object) {
+
+                recursiveGetProp(obj[property], lookup, callback);
+            }
+        }
+    }
+    //sends the search request and recieves the results when button is clicked or enter is pressed
+    //no error handling
+    $( document ).ready(function() {
+      $( "#searchButton" ).on( "click", function() {
+        search();
+        console.log( $('#key').val() + " was sent to search.go" );
+      });
+        console.log( "document loaded" );
+
+    });
+/* Would be fore adding records
+    $( document ).ready(function() {
+      $( "#formRec" ).on( "submit", function() {
+        console.log("woop");
+        $.get( "/addRecord", { iName: $("#iName").val(),
+                                iPrice: $("#iPrice").val(),
+                                iQty: $("#iQty").val()} )
+          .done(function( data ) {
+            //parse data into json object
+            //double parse,look at how JSON is built in the worker
+
+            });
+          });
+      });
+*/
+    </script>
+</head>
+<body>
+<!--Search field of id= keyr-->
+<input id="key" type="text" name="searchKey" placeholder="Enter Keyword">  </input>
+
+<p>
+  <!--button to submit search id= searchButton -->
+  <input id="searchButton" type="button" value="Search">
+</p>
+<p>
+  <!--list box to display returned records id= list -->
+  <select name="listBox" id="list" onChange="fillFunction()" size="5"  ></select>
+  <!--text area to display selected record id= display-->
+  <textarea id="display" rows="5" readonly></textarea>
+</p>
+<p>
+<form id="form_id">
+  Item Name:<br>
+  <input type="text" name="name" id="iName"><br>
+  Price:<br>
+  <input type="text" name="Price" id="iPrice"><br>
+  Qty:<br>
+  <input type="text" name="Qty" id="iQty"><br>
+  <input type="submit" id="addRec" value="addRecord"><br>
+</form>
+</p>
+<script>
+
+//when search field of id= key is selected
+//Add a keypress listener to listen for the enter key of keycode== 13
+$(document).ready(function(){
+    $('#key').keypress(function(e){
+      if(e.keyCode==13)
+      $('#searchButton').click();
+    });
+});
+</script>
+</body>
+</html>

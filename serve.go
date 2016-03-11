@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -84,6 +85,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
+func indexHandler(w http.ResponseWriter, r *http.Request, title string) {
+	log.Println("index handler loaded")
+	p, err := loadPage(title)
+	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+}
 func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	log.Println("getting title")
 	m := validPath.FindStringSubmatch(r.URL.Path)
@@ -100,6 +106,7 @@ func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandlerFunc("/", makeHandler(indexHandler))
 
 	s := &http.Server{
 		Addr:           ":8181",
