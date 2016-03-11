@@ -106,7 +106,7 @@ func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
-	http.HandlerFunc("/", makeHandler(indexHandler))
+	http.HandleFunc("/", makeHandler(indexHandler))
 
 	s := &http.Server{
 		Addr:           ":8181",
