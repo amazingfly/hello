@@ -20,11 +20,13 @@ type Page struct {
 }
 
 func (p *Page) save() error {
+	log.Println("saving page")
 	filename := p.Title + ".html"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
+	log.Println("loading page")
 	filename := title + ".html"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -34,6 +36,7 @@ func loadPage(title string) (*Page, error) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+	log.Println("rendering template")
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -42,6 +45,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("making handler")
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			http.NotFound(w, r)
@@ -52,6 +56,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	log.Println("view handler loaded")
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -61,6 +66,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+	log.Println("edit handler loaded")
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -68,6 +74,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	renderTemplate(w, "edit", p)
 }
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+	log.Println("Save handler loaded")
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	err := p.save()
@@ -76,9 +83,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
-
 }
 func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	log.Println("getting title")
 	m := validPath.FindStringSubmatch(r.URL.Path)
 	if m == nil {
 		http.NotFound(w, r)
@@ -95,8 +102,8 @@ func main() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	log.Fatal(s.ListenAndServeTLS("cert.pem", "key.pem"))
-
+	log.Fatal(s.ListenAndServe())
+	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
