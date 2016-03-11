@@ -89,7 +89,7 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 
 func main() {
 	s := &http.Server{
-		Addr:           ":8181",
+		Addr:           ":80",
 		Handler:        nil,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -101,21 +101,5 @@ func main() {
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 
-	/*
-		rpURL, err := url.Parse(backendServer.URL)
-		if err != nil {
-			log.Fatal(err)
-		}
-		frontendProxy := httptest.NewServer(httputil.NewSingleHostReverseProxy(rpURL))
-		defer frontendProxy.Close()
-
-		resp, err := http.Get(frontendProxy.URL)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}*/
+	s.ListenAndServe()
 }
