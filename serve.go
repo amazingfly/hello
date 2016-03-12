@@ -48,15 +48,15 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("making handler")
 		log.Printf("r.URL.Path= %s\n", r.URL.Path)
-		if r.URL.Path != "/"{
-		m := validPath.FindStringSubmatch(r.URL.Path)
-		if m == nil {
-			log.Println("m is nil")
-			http.NotFound(w, r)
-			return
-		}
-		log.Println(m)
-		fn(w, r, m[2])
+		if r.URL.Path != "/" {
+			m := validPath.FindStringSubmatch(r.URL.Path)
+			if m == nil {
+				log.Println("m is nil")
+				http.NotFound(w, r)
+				return
+			}
+			log.Println(m)
+			fn(w, r, m[2])
 		}
 		fn(w, r, "index")
 
