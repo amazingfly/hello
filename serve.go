@@ -116,7 +116,7 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	name <- r.FormValue("searchKey")
-	fmt.Printf("recieved search key")
+	fmt.Printf("recieved search key= %s\n", <-name)
 
 	w.Header().Set("Content-Type", "application/JSON")
 	err := json.NewEncoder(w).Encode(<-response)
@@ -159,12 +159,12 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				req.SetBasicAuth(authName, authPass)
+				//req.SetBasicAuth(authName, authPass)
 				//creates client and sends request then gathers the response
 				client := &http.Client{}
-				resp, err2 := client.Do(req)
-				if err2 != nil {
-					fmt.Println(err2)
+				resp, err := client.Do(req)
+				if err != nil {
+					fmt.Println(err)
 				} else {
 					defer resp.Body.Close()
 					//Reads the body of the result then converts it into bytes then into gabs.Container
