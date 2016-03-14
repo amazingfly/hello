@@ -59,7 +59,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 				http.NotFound(w, r)
 				return
 			}
-			log.Println(m)
+			log.Printf("m[2m= %s\n", m[2])
 			fn(w, r, m[2])
 		} else {
 			fn(w, r, "index")
