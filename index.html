@@ -4,7 +4,7 @@
     <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script>
     var recordArr = [];
-    search();
+    //search();
     //search searches and displays records
     function search (){
         //resets the list and array of records when each new search is started
@@ -14,7 +14,7 @@
           .done(function( data ) {
             //parse data into json object
             //double parse,look at how JSON is built in the worker
-            var jsonmsg = $.parseJSON($.parseJSON(data));
+            var jsonmsg = $.parseJSON(data);
 
 //finds name and ID of a record and adds it to the listbox id= list
 var i = 0
