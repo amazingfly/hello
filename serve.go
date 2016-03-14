@@ -1,18 +1,24 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 )
 
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+
+var name = make(chan string, 1)
+var response = make(chan []byte, 1)
 
 //Page is a struct to hold page data
 type Page struct {
@@ -57,9 +63,9 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 			}
 			log.Println(m)
 			fn(w, r, m[2])
+		} else {
+			fn(w, r, "index")
 		}
-		fn(w, r, "index")
-
 	}
 }
 
@@ -110,6 +116,17 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil
 }
 
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	name <- r.FormValue("searchKey")
+	fmt.Printf("recieved search key")
+
+	w.Header().Set("Content-Type", "application/JSON")
+	err := json.NewEncoder(w).Encode(<-response)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func main() {
 
 	log.Println("Server started")
@@ -117,6 +134,7 @@ func main() {
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/", makeHandler(indexHandler))
+	http.HandleFunc("/searchFor", searchHandler)
 
 	s := &http.Server{
 		Addr:           ":8181",
@@ -126,4 +144,45 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 	log.Fatal(s.ListenAndServe())
+
+	var err error
+	var req *http.Request
+
+	go func() {
+		for {
+			var searchJSON = fmt.Sprintf(`{"searchField": "%s"}`, <-name)
+
+			req, err = http.NewRequest("POST", url, bytes.NewBuffer(PrepHMAC(searchJSON)))
+
+			//adds record to db
+			//no frontend access
+			//req, err = http.NewRequest("POST", url, bytes.NewBuffer(PrepHMAC(AddItem())))
+
+			if err != nil {
+				fmt.Println(err)
+			}
+			req.SetBasicAuth(authName, authPass)
+			//creates client and sends request then gathers the response
+			client := &http.Client{}
+			resp, err2 := client.Do(req)
+			if err2 != nil {
+				fmt.Println(err2)
+			} else {
+				defer resp.Body.Close()
+				//Reads the body of the result then converts it into bytes then into gabs.Container
+				body, err := ioutil.ReadAll(resp.Body)
+				bodyByte := []byte(body)
+
+				result, _ := gabs.ParseJSON(bodyByte)
+				if err != nil {
+					fmt.Printf("%s", err)
+					os.Exit(1)
+				}
+				//Search for the results and send them as a string to func Handler
+				response <- result.S("results").String()
+			}
+		}
+	}()
+	forever := make(chan bool)
+	<-forever
 }
