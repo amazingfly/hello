@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"time"
 )
@@ -125,8 +126,16 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func cacheFileNames() {
+	sx, err := filepath.Glob(".html")
+	for a, b := range sx {
+		fmt.Printf("a= %s\n", a)
+		fmt.Printf("b= %s\n", b)
+	}
+}
 
+func main() {
+	cacheFileNames()
 	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
