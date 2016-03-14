@@ -10,40 +10,41 @@
         //resets the list and array of records when each new search is started
         $("#list").empty();
         recordArr = [];
+        console.log("about to sendsearch key to server")
         $.get( "/searchFor", { searchKey: $("#key").val() } )
           .done(function( data ) {
+            console.log(".done starting")
+            console.log(data);
+            var s = "herro";
+            s = data;
             //parse data into json object
             //double parse,look at how JSON is built in the worker
-            var jsonmsg = $.parseJSON(data);
-
+            var jsonmsg = $.parseJSON($.parseJSON(s));
+            console.log(jsonmsg);
 //finds name and ID of a record and adds it to the listbox id= list
 
 var i = 0
 
 recursiveGetProp(jsonmsg, 'Name', function(obj) {
-    recordArr.push(new record(i, jsonmsg[`item`+i].ID, obj, jsonmsg[`item`+i].qty, jsonmsg[`item`+i].price ));
-    addOption(recordArr[i].name +" #"+recordArr[i].id , i);
+    console.log("why doesn't this happen")
+    recordArr.push(new record(i, jsonmsg[`Result`].Name ));
+    addOption(recordArr[i].name +" #" + i, i);
     console.log(recordArr[i].name + " : gets passed into addOption")
     i++;
 });
+console.log("right after the recursive")
           });
         }
 
     //prototype for record objects
-    function record(index, id, name, qty, price) {
+    function record(index, name) {
       this.index = index;
-      this.id = id;
       this.name = name;
-      this.qty = qty;
-      this.price = price;
 }
     //formats the record objects data to be displayed, used in fillFunction
     function formatRecordText (index){
       var s = "";
-      s += "ID#:   " + recordArr[index].id + '\n';
       s += "Name:  " + recordArr[index].name + '\n';
-      s += "Price: " + recordArr[index].price.toFixed(2) + '\n';
-      s += "qty:   " + recordArr[index].qty + '\n';
       return s;
     }
     //calls filltext and sends it formateRecordText to fill the record display text area
@@ -64,14 +65,19 @@ recursiveGetProp(jsonmsg, 'Name', function(obj) {
     }
     //gets a property of the JSON records returned from the search
     function recursiveGetProp(obj, lookup, callback) {
-
+        console.log(obj)
+        console.log("lookup")
+        console.log(lookup)
         for (property in obj) {
+            console.log(property)
             if (property == lookup) {
+                console.log("found the property")
                 callback(obj[property]);
             } else if (obj[property] instanceof Object) {
-
+                console.log("nothing found calling recurv again")
                 recursiveGetProp(obj[property], lookup, callback);
             }
+            console.log("after recurve if")
         }
     }
     //sends the search request and recieves the results when button is clicked or enter is pressed
@@ -79,7 +85,7 @@ recursiveGetProp(jsonmsg, 'Name', function(obj) {
     $( document ).ready(function() {
       $( "#searchButton" ).on( "click", function() {
         search();
-        console.log( $('#key').val() + " was sent to search.go" );
+        console.log( $('#key').val() + " was sent to serve.go" );
       });
         console.log( "document loaded" );
 

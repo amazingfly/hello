@@ -13,11 +13,13 @@ import (
 	"time"
 )
 
+var err error
+var fileCache []string
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
 
-var name = make(chan string, 1)
-var response = make(chan []byte, 1)
+var name = make(chan string)
+var response = make(chan string)
 
 //Page is a struct to hold page data
 type Page struct {
@@ -117,28 +119,44 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	name <- r.FormValue("searchKey")
-	fmt.Printf("recieved search key= %s\n", <-name)
-
+	var re = <-response
+	log.Println("about to w.Handler")
 	w.Header().Set("Content-Type", "application/JSON")
-	err := json.NewEncoder(w).Encode(<-response)
+	err := json.NewEncoder(w).Encode(re)
+	log.Printf("response= %s\n", re)
+	log.Println("response sent")
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func cacheFileNames() {
-	sx, err := filepath.Glob(".html")
+	fmt.Println("starting cache")
+	fileCache, err = filepath.Glob("*.html")
 	if err != nil {
 		log.Println(err)
 	}
-	for a, b := range sx {
+	for a, b := range fileCache {
 		fmt.Printf("a= %d  ", a)
 		fmt.Printf("b= %s\n", b)
 	}
 }
 
+func search() {
+	for {
+		var n = <-name
+		log.Printf("n= %s\n", n)
+		for _, fileName := range fileCache {
+			if n == fileName[:5] {
+				log.Printf("fileName[:5}= %s\n", fileName[:5])
+				response <- fmt.Sprintf(`{"Result":{"Name": "%s"}}`, n)
+			}
+		}
+	}
+}
+
 func main() {
-	fmt.Println("starting cache")
+	go search()
 	cacheFileNames()
 	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
