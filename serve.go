@@ -128,8 +128,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func cacheFileNames() {
 	sx, err := filepath.Glob(".html")
+	if err != nill {
+		log.Println(err)
+	}
 	for a, b := range sx {
-		fmt.Printf("a= %s\n", a)
+		fmt.Printf("a= %d\n", a)
 		fmt.Printf("b= %s\n", b)
 	}
 }
