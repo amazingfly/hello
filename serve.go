@@ -128,16 +128,17 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func cacheFileNames() {
 	sx, err := filepath.Glob(".html")
-	if err != nill {
+	if err != nil {
 		log.Println(err)
 	}
 	for a, b := range sx {
-		fmt.Printf("a= %d\n", a)
+		fmt.Printf("a= %d  ", a)
 		fmt.Printf("b= %s\n", b)
 	}
 }
 
 func main() {
+	fmt.Println("starting cache")
 	cacheFileNames()
 	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
