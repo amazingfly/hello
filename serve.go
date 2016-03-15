@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -10,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -119,11 +119,10 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	name <- r.FormValue("searchKey")
-	var re = <-response
-	log.Println("about to w.Handler")
+
 	w.Header().Set("Content-Type", "application/JSON")
-	err := json.NewEncoder(w).Encode(re)
-	log.Printf("response= %s\n", re)
+	w.Write([]byte(<-response))
+
 	log.Println("response sent")
 	if err != nil {
 		fmt.Println(err)
@@ -136,28 +135,42 @@ func cacheFileNames() {
 	if err != nil {
 		log.Println(err)
 	}
+	var json = `{"Result":{ "Pages":[{`
+
 	for a, b := range fileCache {
-		fmt.Printf("a= %d  ", a)
-		fmt.Printf("b= %s\n", b)
+		fmt.Printf("a= %d, len= %d", a, len(fileCache))
+		if a+1 < len(fileCache) {
+			json = json + fmt.Sprintf(`"Name": "%s"},{`, strings.Split(b, ".")[0])
+		} else {
+			json = json + fmt.Sprintf(`"Name": "%s"}]}}`, strings.Split(b, ".")[0])
+		}
 	}
+	fmt.Println(json)
+	fmt.Println("sedning rsponse channel")
+	response <- json
 }
 
 func search() {
 	for {
 		var n = <-name
-		log.Printf("n= %s\n", n)
-		for _, fileName := range fileCache {
-			if n == fileName[:5] {
-				log.Printf("fileName[:5}= %s\n", fileName[:5])
-				response <- fmt.Sprintf(`{"Result":{"Name": "%s"}}`, n)
+		if n != "" {
+			log.Printf("n= %s\n", n)
+			for _, fileName := range fileCache {
+				if n == strings.Split(fileName, ".")[0] {
+					log.Printf("fileName[:5}= %s\n", fileName[:5])
+					response <- fmt.Sprintf(`{"Result":{"Pages":[{"Name": "%s"}]}}`, n)
+				}
+				fmt.Println(n)
 			}
+		} else {
+			fmt.Println("this happense")
+			cacheFileNames()
 		}
 	}
 }
 
 func main() {
 	go search()
-	cacheFileNames()
 	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))

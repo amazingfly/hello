@@ -4,7 +4,8 @@
     <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script>
     var recordArr = [];
-    //search();
+    var selected = "";
+    search();
     //search searches and displays records
     function search (){
         //resets the list and array of records when each new search is started
@@ -14,12 +15,7 @@
         $.get( "/searchFor", { searchKey: $("#key").val() } )
           .done(function( data ) {
             console.log(".done starting")
-            console.log(data);
-            var s = "herro";
-            s = data;
-            //parse data into json object
-            //double parse,look at how JSON is built in the worker
-            var jsonmsg = $.parseJSON($.parseJSON(s));
+            var jsonmsg = $.parseJSON(data);
             console.log(jsonmsg);
 //finds name and ID of a record and adds it to the listbox id= list
 
@@ -27,7 +23,7 @@ var i = 0
 
 recursiveGetProp(jsonmsg, 'Name', function(obj) {
     console.log("why doesn't this happen")
-    recordArr.push(new record(i, jsonmsg[`Result`].Name ));
+    recordArr.push(new record(i, jsonmsg.Result.Pages[i].Name ));
     addOption(recordArr[i].name +" #" + i, i);
     console.log(recordArr[i].name + " : gets passed into addOption")
     i++;
@@ -50,6 +46,7 @@ console.log("right after the recursive")
     //calls filltext and sends it formateRecordText to fill the record display text area
     function fillFunction(){
       var list = document.getElementById("list");
+      selected = recordArr[list.options[list.selectedIndex].value].name
       fillText("display", formatRecordText(list.options[list.selectedIndex].value));
     }
     //fills text area using id
@@ -88,7 +85,13 @@ console.log("right after the recursive")
         console.log( $('#key').val() + " was sent to serve.go" );
       });
         console.log( "document loaded" );
+    });
 
+    $( document ).ready(function() {
+      $( "#goButton" ).on( "click", function() {
+        window.location = ('/view/'+ selected)
+      });
+        console.log( "document loaded" );
     });
 /* Would be fore adding records
     $( document ).ready(function() {
@@ -122,15 +125,9 @@ console.log("right after the recursive")
   <textarea id="display" rows="5" readonly></textarea>
 </p>
 <p>
-<form id="form_id">
-  Item Name:<br>
-  <input type="text" name="name" id="iName"><br>
-  Price:<br>
-  <input type="text" name="Price" id="iPrice"><br>
-  Qty:<br>
-  <input type="text" name="Qty" id="iQty"><br>
-  <input type="submit" id="addRec" value="addRecord"><br>
-</form>
+
+<input type="button" id="goButton" value="GO"><br>
+
 </p>
 <script>
 
