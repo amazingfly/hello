@@ -29,7 +29,7 @@ type Page struct {
 
 func (p *Page) save() error {
 	log.Println("saving page")
-	filename := p.Title + ".html"
+	filename := p.Title + ".wiki"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
@@ -45,7 +45,7 @@ func loadPage(title string) (*Page, error) {
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	log.Println("rendering template")
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+	err := templates.ExecuteTemplate(w, tmpl+".wiki", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -131,7 +131,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func cacheFileNames() {
 	fmt.Println("starting cache")
-	fileCache, err = filepath.Glob("*.html")
+	fileCache, err = filepath.Glob("*.wiki")
 	if err != nil {
 		log.Println(err)
 	}
