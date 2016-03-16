@@ -81,8 +81,8 @@ console.log("right after the recursive")
     //no error handling
     $( document ).ready(function() {
       $( "#searchButton" ).on( "click", function() {
-        search();
-        console.log( $('#key').val() + " was sent to serve.go" );
+        window.location = ('/edit/'+ $('#key').val());
+        console.log( "Navigating to /edit/" + $('#key').val() );
       });
         console.log( "document loaded" );
     });
@@ -90,6 +90,14 @@ console.log("right after the recursive")
     $( document ).ready(function() {
       $( "#goButton" ).on( "click", function() {
         window.location = ('/view/'+ selected)
+      });
+        console.log( "document loaded" );
+    });
+
+    $( document ).ready(function() {
+      $( "#newButton" ).on( "click", function() {
+        search();
+        console.log( $('#key').val() + " was sent to serve.go" );
       });
         console.log( "document loaded" );
     });
