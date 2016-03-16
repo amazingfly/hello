@@ -33,9 +33,19 @@ func (p *Page) save() error {
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
+func loadPageHTML(title string) (*Page, error) {
+	log.Println("Loading page html")
+	filename := title + ".html"
+	body, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return &Page{Title: title, Body: body}, nil
+}
+
 func loadPage(title string) (*Page, error) {
 	log.Println("loading page")
-	filename := title + ".html"
+	filename := title + ".wiki"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -45,7 +55,7 @@ func loadPage(title string) (*Page, error) {
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	log.Println("rendering template")
-	err := templates.ExecuteTemplate(w, tmpl+".wiki", p)
+	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -74,6 +84,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Println("view handler loaded")
 	p, err := loadPage(title)
 	if err != nil {
+		log.Printf("=======error: %s\n",err)
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
@@ -101,7 +112,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 func indexHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Println("index handler loaded")
-	p, err := loadPage(title)
+	p, err := loadPageHTML(title)
 	if err != nil {
 		log.Println(err)
 	}
