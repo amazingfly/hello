@@ -80,7 +80,7 @@ console.log("right after the recursive")
     //sends the search request and recieves the results when button is clicked or enter is pressed
     //no error handling
     $( document ).ready(function() {
-      $( "#searchButton" ).on( "click", function() {
+      $( "#newButton" ).on( "click", function() {
         window.location = ('/edit/'+ $('#key').val());
         console.log( "Navigating to /edit/" + $('#key').val() );
       });
@@ -95,7 +95,7 @@ console.log("right after the recursive")
     });
 
     $( document ).ready(function() {
-      $( "#newButton" ).on( "click", function() {
+      $( "#searchButton" ).on( "click", function() {
         search();
         console.log( $('#key').val() + " was sent to serve.go" );
       });
@@ -125,7 +125,7 @@ console.log("right after the recursive")
 <p>
   <!--button to submit search id= searchButton -->
   <input id="searchButton" type="button" value="Search">
-  <input id="newButton" type="button" value="new">
+  <input id="newButton" type="button" value="New">
 </p>
 <p>
   <!--list box to display returned records id= list -->
