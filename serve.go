@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"html/template"
@@ -11,6 +12,10 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/lib/pq"
 )
 
 var err error
@@ -25,6 +30,155 @@ var response = make(chan string)
 type Page struct {
 	Title string
 	Body  []byte
+}
+
+//Model is a model for a gorm table
+type Model struct {
+	ID uint `gorm:"primary_key"`
+}
+
+//Product is for the itemDB
+type Product struct {
+	ID    int `sql:"AUTO_INCREMENT" gorm:"primary_key"`
+	Name  string
+	Qty   int
+	Price float64
+}
+
+//Wiki is the wiki page table
+type Wiki struct {
+	ID          int    `sql:"AUTO_INCREMENT" gorm:"primary_key"`
+	Title       string `sql:"size:255;unique;index"`
+	FirstName   string
+	LastName    string
+	Body        string
+	ViewCount   int
+	DateCreated time.Time `sql:"DEFAULT:current_timestamp"`
+}
+
+//SQL stuff
+func gormDB() gorm.DB {
+	//var product []Product
+	//var wiki Wiki
+	//Opens DB connection
+	db, err := gorm.Open("postgres", "user=postgres password=postgres dbname=wiki sslmode=disable")
+	if err != nil {
+		log.Printf("ERROR: %s\n", err)
+	}
+	//defer db.Close()
+	//create tables
+	//db.CreateTable(&wiki)
+
+	//db.Create(&Wiki{Title: "derek", FirstName: "Derek", LastName: "Stich", Body: "empty", ViewCount: 0})
+	//Find records
+	/*
+		db = db.Where("FirstName LIKE ?", "%ere%").Find(&wiki)
+		fmt.Println("===========================")
+		r, err := db.Rows()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if r != nil {
+			for r.Next() {
+				var id int
+				var name string
+				var qty int
+				var price float64
+
+				err = r.Scan(&id, &name, &qty, &price)
+				if err != nil {
+					log.Println(err)
+				}
+				fmt.Println(id)
+				fmt.Println(name)
+				fmt.Println(qty)
+				fmt.Println(price)
+			}
+		} else {
+			log.Println("rows was nil")
+		}
+	*/
+	return *db
+}
+
+func loadRecord(title string) (*Wiki, bool) {
+	var db = gormDB()
+	var notFound bool
+	//var wiki Wiki
+
+	db = *db.Where("Title = ?", title).Find(&Wiki{Title: title})
+	//db = *db.FirstOrCreate(&Wiki{Title: title}, &Wiki{Title: title})
+	notFound = db.RecordNotFound()
+
+	fmt.Printf("a======== %v\n", notFound)
+	r, err := db.Rows()
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer r.Close()
+	if r != nil {
+		for r.Next() {
+			var id int
+			var title, firstName, lastName, body string
+			var dateCreated time.Time
+			var viewCount int
+
+			err = r.Scan(&id, &title, &firstName, &lastName, &body, &viewCount, &dateCreated)
+			if err != nil {
+				log.Println(err)
+			}
+			fmt.Println(id)
+			fmt.Println(title)
+			fmt.Println(firstName)
+			fmt.Println(lastName)
+			fmt.Println(body)
+			fmt.Println(viewCount)
+			fmt.Println(dateCreated)
+			fmt.Println("=== RETURNING ===")
+
+			return (&Wiki{ID: id, Title: title, FirstName: firstName, LastName: lastName, Body: body, ViewCount: viewCount, DateCreated: dateCreated}), notFound
+		}
+	} else {
+		log.Println("rows was nil")
+	}
+	return nil, notFound
+}
+func openDB() {
+	//start DB connection
+	db, err := sql.Open("postgres", "user=postgres password=postgres dbname=wiki sslmode=disable")
+	if err != nil {
+		log.Println(err)
+	}
+	defer db.Close()
+	//ping to test the connection worked
+	err = db.Ping()
+	if err != nil {
+		log.Println(err)
+	}
+	p, err := db.Prepare("SELECT * FROM products WHERE NAME LIKE '%' || $1 || '%';")
+	if err != nil {
+		log.Println(err)
+	}
+	r, err := p.Query("pep")
+	if err != nil {
+		log.Println(err)
+	}
+	defer r.Close()
+	for r.Next() {
+		var id int
+		var name string
+		var qty int
+		var price float64
+
+		err = r.Scan(&id, &name, &qty, &price)
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Println(id)
+		fmt.Println(name)
+		fmt.Println(qty)
+		fmt.Println(price)
+	}
 }
 
 func (p *Page) save() error {
@@ -53,11 +207,12 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	log.Println("rendering template")
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+	err = templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("=================")
 		return
 	}
 }
@@ -82,32 +237,58 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Println("view handler loaded")
-	p, err := loadPage(title)
-	if err != nil {
-		log.Printf("=======error: %s\n",err)
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
-		return
+	/*
+		p, err := loadPage(title)
+		if err != nil {
+			log.Printf("=======error: %s\n", err)
+			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+			return
+		}
+	*/
+	p, notFound := loadRecord(title)
+	if notFound == true {
+		editHandler(w, r, title)
+	} else {
+		renderTemplate(w, "view", p)
 	}
-	renderTemplate(w, "view", p)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Println("edit handler loaded")
-	p, err := loadPage(title)
-	if err != nil {
-		p = &Page{Title: title}
+	/*
+		p, err := loadPage(title)
+		if err != nil {
+			p = &Page{Title: title}
+		}
+	*/
+	p, notFound := loadRecord(title)
+	if notFound == true {
+		var db = gormDB()
+		db = *db.Create(&Wiki{Title: title})
+		p, _ = loadRecord(title)
 	}
+
 	renderTemplate(w, "edit", p)
 }
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	log.Println("Save handler loaded")
-	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	/*
+		body := r.FormValue("body")
+		p := &Page{Title: title, Body: []byte(body)}
+		err = p.save()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	*/
+	var wiki Wiki
+	p, notFound := loadRecord(title)
+	_ = notFound
+	db := gormDB()
+	db = *db.First(&p)
+	p.Body = r.FormValue("body")
+	fmt.Printf("body= %s\n", wiki.Body)
+	db.Save(p)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 func indexHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -181,6 +362,10 @@ func search() {
 }
 
 func main() {
+	gormDB()
+	fmt.Println("==============")
+	fmt.Println("")
+	//openDB()
 	go search()
 	log.Println("Server started")
 	http.HandleFunc("/view/", makeHandler(viewHandler))
