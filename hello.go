@@ -22,12 +22,18 @@ func loadPage(title string) (*Page, error) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/view/"):]
+	title := r.URL.Path[len("/"):]
 	p, _ := loadPage(title)
 	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
 }
 
+func outletOnHandler(w http.ResponseWriter, r *http.Request) {
+	outletNum := r.URL.Path[len("/outletOn/"):]
+	fmt.Println(outletNum)
+}
+
 func main() {
-	http.HandleFunc("/view/", viewHandler)
-	http.ListenAndServe(":80", nil)
+	http.HandleFunc("/", viewHandler)
+	http.HandleFunc("/outletOn", outletOnHandler)
+	http.ListenAndServe(":9873", nil)
 }

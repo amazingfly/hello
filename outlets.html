@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<head>
+<meta charset="utf-8">
+<meta content="derek, stich, home, automation" name="keywords">
+<meta content="My cat cam!." name="description">
+<meta content="Power Outlets" name="title">
+<title><center>Power Outlets</center></title>
+
+<style>
+    .OnButton{
+        display: inline-block;
+        background-color: green;
+        width: 75px;
+        height: 75px;
+        margin: 10px;
+        border: 3px solid red;
+    }
+    .OffButton{
+        display: inline-block;
+        background-color: red;
+        width: 75px;
+        height: 75px;
+        margin: 10px;
+        border: 3px solid green;
+    }
+</style>
+<script>
+    function SendSignal(outletNum, onOff){
+        
+    $.get( "/outlet", { outlet: outletNum, position: onOff } )
+          .done(function( data ) {
+            console.log(".done starting")
+            var jsonmsg = $.parseJSON(data);
+    });
+    }
+    
+    window.onload = function () {
+        document.getElementById("On1").addEventListener("click", On1);
+        document.getElementById("On2").addEventListener("click", On2);
+        document.getElementById("On3").addEventListener("click", On3);
+        document.getElementById("On4").addEventListener("click", On4);
+        document.getElementById("On5").addEventListener("click", On5);
+    }
+    function On1(){
+        SendSignal(1, true)
+    }
+    function On2(){
+        SendSignal(2, true)
+    }
+    function On3(){
+        SendSignal(3, true)
+    }
+    function On4(){
+        SendSignal(4, true)
+    }
+    function On5(){
+        SendSignal(5, true)
+    }
+    
+/*
+var div = document.getElementsByClassName('OnButton')[0];
+console.log("buts")
+
+document.getElementsByClassName('OnButton')[0].addEventListener('click',function(){
+    console.log("geeples goo")
+},false)
+
+ div.addEventListener('click', function (event) {
+     alert('Hi!');
+     console.log("poops")
+ });
+
+function onOutlet(outletNum int){
+	document.get( "/outletOn/", { OutletNum: outletNum } );
+}*/
+</script>
+</head>
+<body>
+    <div id="On1" class="OnButton"><center>outlet 1<br> on</center></div>
+    <div id="On2" class="OnButton"><center>outlet 2<br> on</center></div>
+    <div id="On3" class="OnButton"><center>outlet 3<br> on</center></div>
+    <div id="On4" class="OnButton"><center>outlet 4<br> on</center></div>
+    <div id="On5" class="OnButton"><center>outlet 5<br> on</center></div>
+    <br>
+    <div class="OffButton"><center>outlet 1<br> off</center></div>
+    <div class="OffButton"><center>outlet 2<br> off</center></div>
+    <div class="OffButton"><center>outlet 3<br> off</center></div>
+    <div class="OffButton"><center>outlet 4<br> off</center></div>
+    <div class="OffButton"><center>outlet 5<br> off</center></div>
+    <!--
+<button type="button" onclick="onOutlet(1)">#1 On</button>
+<button type="button" onclick="offOutlet(1)">#1 Off</button>
+<br>
+<button type="button" onclick="onOutlet(2)">#2 On</button>
+<button type="button" onclick="offOutlet(2)">#2 Off</button>
+<br>
+<button type="button" onclick="onOutlet(3)">#3 On</button>
+<button type="button" onclick="offOutlet(3)">#3 Off</button>
+<br>
+<button type="button" onclick="onOutlet(4)">#4 On</button>
+<button type="button" onclick="offOutlet(4)">#4 Off</button>
+<br>
+<br>
+<button type="button" onclick="onOutlet(4)">#4 On</button>
+<button type="button" onclick="offOutlet(4)">#4 Off</button>
+-->
+</body>
+</html>
