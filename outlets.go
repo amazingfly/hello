@@ -53,7 +53,7 @@ func outletHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(signalSplit)
 	fmt.Println(outletNum)
 
-	cmd := exec.Command("on1outlet")
+	cmd := exec.Command("on5outlet")
 	err := cmd.Start()
 	if err != nil {
 		fmt.Println(err)
